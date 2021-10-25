@@ -26,11 +26,12 @@ while True:
         s.sendto(num_pak, addr)
     else:
         pkn_num = int.from_bytes(data[-3:len(data)], 'little')
-        print(pkn_num)
+        # print(pkn_num)
         if not arr_bool[pkn_num]:
             arr_data[pkn_num] = data
             arr_bool[pkn_num] = True
             if count <= num_pak_int:
                 count += 1
+        # that's why the client will stop at the end.
         s.sendto(data, addr)
 
