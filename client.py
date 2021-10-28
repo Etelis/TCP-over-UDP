@@ -10,30 +10,43 @@ DEFAULT_TIMEOUT = 12
 FIN_MSG = b'FIN'
 SYN_MSG = b'SYN'
 
+
+class Data:
+    def __init__(self, file_name):
+        data = open(file_name, "rb").read()
+        # Make new array of bytes from current file, to each segment add 3-byte long sequence number.
+        self.data_arr = [(data[i:i + 97] + int((i / 97)).to_bytes(3, 'little')) for i in range(0, len(data), 97)]
+        # Make new boolean array to hold acknowledgments received.
+        self.ack_arr = [False] * len(self.data_arr)
+        self.arr_size_bytes = (len(self.data_arr)).to_bytes(3, 'little')
+
+    def is_acked(self, n):
+        return self.ack_arr[n]
+
+    def notify_ack(self, index):
+        self.ack_arr[index] = True
+
+    def get_size(self):
+        return self.arr_size_bytes
+
+    def get_data_arr(self):
+        return self.data_arr
+
+    def done_acking(self):
+        for ack in self.ack_arr:
+            if not ack:
+                return False
+        return True
+
+
 # UDP socket initialisation
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.settimeout(DEFAULT_TIMEOUT)
-data_arr = [b'0']
-ack_arr = [False]
-arr_size_bytes = b'0'
-
-
-# Variable initialization.
-def initialize():
-    global data_arr, ack_arr, arr_size_bytes
-    text = open(FILE_NAME, "rb")
-    data = text.read()
-    # Make new array of bytes from current file, to each segment add 3-byte long sequence number.
-    data_arr = [(data[i:i + 97] + int((i / 97)).to_bytes(3, 'little')) for i in range(0, len(data), 97)]
-    arr_size_bytes = (len(data_arr)).to_bytes(3, 'little')
-    # Make new boolean array to hold acknowledgments received.
-    ack_arr = [False]*len(data_arr)
-    text.close()
 
 
 # Sync method will be in charge of synchronizing connection with the server.
 def syn():
-    syn_msg = SYN_MSG + arr_size_bytes
+    syn_msg = SYN_MSG + data_toSend.get_size()
     s.sendto(syn_msg, (IP_ADDR, PORT))
     # 2 ways handshake as the server is not communicating back but only receives data and approves it.
     try:
@@ -49,10 +62,10 @@ def syn():
 
 # will be in-charge of sending the packages that has not received ack yet.
 def send_pkgs():
-    for count, pkg in enumerate(data_arr):
+    for count, pkg in enumerate(data_toSend.get_data_arr()):
         print("count = " + str(count))
         # Send only packages that has not received ack for.
-        if not ack_arr[count]:
+        if not data_toSend.is_acked(count):
             s.sendto(pkg, (IP_ADDR, PORT))
             time.sleep(0.1)
     ack()
@@ -67,10 +80,10 @@ def ack():
                 fin()
             pkg_num = int.from_bytes(data_ack[-3:len(data_ack)], 'little')
             print("got ack for:" + str(pkg_num))
-            ack_arr[pkg_num] = True
+            data_toSend.notify_ack(pkg_num)
 
     except socket.timeout:
-        if not finish():
+        if not data_toSend.done_acking():
             send_pkgs()
 
 
@@ -90,12 +103,5 @@ def fin():
         fin()
 
 
-def finish():
-    for b in ack_arr:
-        if not b:
-            return False
-    return True
-
-
-initialize()
+data_toSend = Data(FILE_NAME)
 syn()
