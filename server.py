@@ -38,7 +38,7 @@ def syn(syn_msg, addr):
         syn(syn_msg, client)
     # otherwise, return the 000 package and move on to accepting packages.
     else:
-        return syn_msg
+        return bytes(syn_msg)
 
 
 # This function will print the data when all received.
