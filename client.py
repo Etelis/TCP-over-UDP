@@ -27,7 +27,7 @@ def initialize():
     data_arr = [(data[i:i + 97] + int((i / 97)).to_bytes(3, 'little')) for i in range(0, len(data), 97)]
     arr_size_bytes = (len(data_arr)).to_bytes(3, 'little')
     # Make new boolean array to hold acknowledgments received.
-    ack_arr = [False for i in range(0, len(data_arr), 1)]
+    ack_arr = [False]*len(data_arr)
     text.close()
 
 
@@ -41,7 +41,7 @@ def syn():
         if get_syn != syn_msg:
             syn()
         else:
-            sent_pkgs()
+            send_pkgs()
     except socket.timeout:
         # in-case of drop re-send package.
         syn()
