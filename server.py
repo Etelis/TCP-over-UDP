@@ -93,7 +93,7 @@ while True:
 
     # if FIN message received after connection has been close
     # meaning the client did not receive the message and we should re send it
-    elif data == FIN_MSG:
+    else:
         fin(client)
 
     # if sync with client made successfully move to accept all packages from client.
