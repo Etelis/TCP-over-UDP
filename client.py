@@ -6,7 +6,7 @@ import time
 IP_ADDR = sys.argv[1]
 PORT = int(sys.argv[2])
 FILE_NAME = sys.argv[3]
-DEFAULT_TIMEOUT = 12
+DEFAULT_TIMEOUT = 5
 FIN_MSG = b'FIN'
 SYN_MSG = b'SYN'
 

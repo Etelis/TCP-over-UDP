@@ -9,7 +9,7 @@ SYN_FLG = False
 buffer_size = 0
 bool_arr = [False]
 data_arr = []
-iteration_counter = 1
+iteration_counter = 0
 
 # UDP socket initialisation
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -33,12 +33,9 @@ def syn(syn_msg, addr):
     s.sendto(syn_msg, addr)
     syn_msg, addr = s.recvfrom(100)
     # if the message received is not the first package, than resend the syn ack confirmation.
-    if (int.from_bytes(syn_msg[-3:len(syn_msg)], 'little')) != 0:
-        print("Wanted pkg 000, but got: " + str(int.from_bytes(syn_msg[-3:len(syn_msg)], 'little')))
+    if syn_msg == SYN_MSG:
+        print("Expected to finish got syn again")
         syn(syn_msg, client)
-    # otherwise, return the 000 package and move on to accepting packages.
-    else:
-        return bytes(syn_msg)
 
 
 # This function will print the data when all received.
@@ -56,7 +53,7 @@ def initialize():
     bool_arr = [False]
     data_arr = [b'0']
     SYN_FLG = False
-    iteration_counter = 1
+    iteration_counter = 0
     s.settimeout(None)
 
 
@@ -83,13 +80,12 @@ while True:
     if not SYN_FLG and data[0:3] == SYN_MSG:
         # buffer_size is the amount of packages we are expecting.
         buffer_size = int.from_bytes(data[-3:len(data)], 'little')
-        data = syn(data, client)
+        syn(data, client)
         print("Buffer size is:" + str(buffer_size))
         SYN_FLG = True
         # Initialize arrays according to size received.
         bool_arr = [False for i in range(0, buffer_size, 1)]
         data_arr = [b'0'] * buffer_size
-        recv_pkg(data)
 
     # if FIN message received after connection has been close
     # meaning the client did not receive the message and we should re send it
