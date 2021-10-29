@@ -85,8 +85,6 @@ def ack():
     except socket.timeout:
         if not data_toSend.done_acking():
             send_pkgs()
-        else:
-            fin()
 
 
 # fin method will be in-charge to finish comunication with the server.

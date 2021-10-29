@@ -48,24 +48,23 @@ def print_data():
 # This function will initialize all variables before each socket connected.
 def initialize():
     print("Finished And initialized.")
-    global buffer_size, bool_arr, data_arr, SYN_FLG, iteration_counter
+    global buffer_size, bool_arr, data_arr, SYN_FLG, iteration_counter, client, s
     buffer_size = 0
     bool_arr = [False]
     data_arr = [b'0']
     SYN_FLG = False
     iteration_counter = 0
-    s.settimeout(None)
 
 
 # This method will resemble the fin method used by the TCP protocol
 # by the end of the connection will signal the server to stop.
-def fin(client):
+def fin(finish_client):
     # timeout is set in-order to make sure no future messages are sent after fin
     s.settimeout(15)
-    s.sendto(FIN_MSG, client)
+    s.sendto(FIN_MSG, finish_client)
     try:
-        fin_ack, client = s.recvfrom(100)
-        fin(client)
+        fin_ack, finish_client = s.recvfrom(100)
+        fin(finish_client)
 
     # if no message received within timeline move to initialize all variables.
     except socket.timeout:
