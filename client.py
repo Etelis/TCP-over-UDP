@@ -7,41 +7,62 @@ IP_ADDR = sys.argv[1]
 PORT = int(sys.argv[2])
 FILE_NAME = sys.argv[3]
 DEFAULT_TIMEOUT = 5
+MSS = 97
+ADDR = (IP_ADDR, PORT)
+NULL = b'0'
 FIN_MSG = b'FIN'
 SYN_MSG = b'SYN'
 
 
+# Data Class - will hold all information of packages needed to be sent and ack received.
 class Data:
+    # Constructor - initialize variables and split file into small chunks.
     def __init__(self, file_name):
-        data = open(file_name, "rb").read()
+        try:
+            data = open(file_name, "rb").read()
+        except OSError:
+            print("Cannot open or read file")
+            s.close()
+            sys.exit()
         # Make new array of bytes from current file, to each segment add 3-byte long sequence number.
-        self.data_arr = [(data[i:i + 97] + int((i / 97)).to_bytes(3, 'little')) for i in range(0, len(data), 97)]
-        # Make new boolean array to hold acknowledgments received.
-        self.ack_arr = [False] * len(self.data_arr)
+        self.data_arr = [(data[i:i + MSS] + int((i / MSS)).to_bytes(3, 'little')) for i in range(0, len(data), MSS)]
+        # Size of the array.
         self.arr_size_bytes = (len(self.data_arr)).to_bytes(3, 'little')
+        # Counter to hold the amount of packages received.
+        self.received_coutner = 0
 
-    def is_acked(self, n):
-        return self.ack_arr[n]
+    # Iterator made for giving the next package in line that did not received ack for.
+    def __iter__(self):
+        self.iter = 0
+        return self
 
+    def __next__(self):
+        # While we didn't reach the end of the array look for a package that have not received ack for.
+        while self.iter < len(self.data_arr):
+            # if found return it.
+            if self.data_arr[self.iter] != NULL:
+                temp = self.iter
+                self.iter += 1
+                return self.data_arr[temp]
+            self.iter += 1
+        raise StopIteration
+
+    # notify_ack - Method will update the current list for the ack received, if new ack will increase received_counter.
     def notify_ack(self, index):
-        self.ack_arr[index] = True
+        if self.data_arr[index] != NULL:
+            self.data_arr[index] = NULL
+            self.received_coutner += 1
 
+    # get_size - as simple as it gets, returns size.
     def get_size(self):
         return self.arr_size_bytes
 
-    def get_data_arr(self):
-        return self.data_arr
-
+    # done_acking - returns true if all acks has been received, otherwise false.
     def done_acking(self):
-        for ack in self.ack_arr:
-            if not ack:
-                return False
-        return True
+        if self.received_coutner == len(self.data_arr):
+            return True
+        return False
 
-
-# UDP socket initialisation
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.settimeout(DEFAULT_TIMEOUT)
 
 
 # Sync method will be in charge of synchronizing connection with the server.
@@ -62,24 +83,21 @@ def syn():
 
 # will be in-charge of sending the packages that has not received ack yet.
 def send_pkgs():
-    for count, pkg in enumerate(data_toSend.get_data_arr()):
-        print("count = " + str(count))
-        # Send only packages that has not received ack for.
-        if not data_toSend.is_acked(count):
-            s.sendto(pkg, (IP_ADDR, PORT))
-            time.sleep(0.1)
-    ack()
+    for pkg in data_toSend:
+        s.sendto(pkg, ADDR)
+    mark_acks()
 
 
 # will be in-charge of checking which acks have been received and marking the packages for future sending.
-def ack():
+def mark_acks():
     try:
         while True:
-            data_ack, addr = s.recvfrom(100)
+            data_ack, address = s.recvfrom(100)
             if data_ack == FIN_MSG:
                 fin()
+            if data_ack == SYN_MSG:
+                syn()
             pkg_num = int.from_bytes(data_ack[-3:len(data_ack)], 'little')
-            print("got ack for:" + str(pkg_num))
             data_toSend.notify_ack(pkg_num)
 
     except socket.timeout:
@@ -90,18 +108,20 @@ def ack():
 # fin method will be in-charge to finish comunication with the server.
 def fin():
     try:
-        print("Waiting for server to return ack")
         s.sendto(FIN_MSG, (IP_ADDR, PORT))
-        fin_ack, addr = s.recvfrom(100)
+        fin_ack, address = s.recvfrom(100)
         if fin_ack != FIN_MSG:
             fin()
         else:
-            print("Received bye bye!")
             s.close()
             sys.exit()
     except socket.timeout:
         fin()
 
+
+# UDP socket initialisation
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.settimeout(DEFAULT_TIMEOUT)
 
 data_toSend = Data(FILE_NAME)
 syn()
