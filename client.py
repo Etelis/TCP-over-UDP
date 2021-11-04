@@ -12,7 +12,7 @@ ADDR = (IP_ADDR, PORT)
 NULL = b'0'
 FIN_MSG = b'FIN'
 SYN_MSG = b'SYN'
-
+MAX_PORT = 65535
 
 # Data Class - will hold all information of packages needed to be sent and ack received.
 class Data:
@@ -121,13 +121,22 @@ def fin():
     except socket.timeout:
         fin()
 
+
+# check arguments before staring.
 def args_check():
-    if 65535 < int(PORT) < 0:
-        print("Port is not in the correct range")
-    if
+    try:
+        if MAX_PORT < int(PORT) < 0:
+            raise "Port is not in the correct range"
+
+        if len(sys.argv) != 3:
+            raise "Wrong amount of arguments."
+    except:
+        s.close()
+        sys.exit()
 
 
 # UDP socket initialisation
+args_check()
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.settimeout(DEFAULT_TIMEOUT)
 

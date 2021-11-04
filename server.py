@@ -8,7 +8,7 @@ SYN_MSG = b'SYN'
 SYN_FLG = False
 buffer_size = 0
 MSS = 100
-
+MAX_PORT = 65535
 
 # UDP socket initialisation
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -84,6 +84,19 @@ def fin(finish_client):
         global SYN_FLG
         s.settimeout(None)
         SYN_FLG = False
+
+
+# check arguments before staring.
+def args_check():
+    try:
+        if MAX_PORT < int(PORT) < 0:
+            raise "Port is not in the correct range"
+
+        if len(sys.argv) != 1:
+            raise "Wrong amount of arguments."
+    except:
+        s.close()
+        sys.exit()
 
 
 # The following while loop will operate as the server itself, accepting connections and printing data.
