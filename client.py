@@ -14,6 +14,7 @@ FIN_MSG = b'FIN'
 SYN_MSG = b'SYN'
 MAX_PORT = 65535
 
+
 # Data Class - will hold all information of packages needed to be sent and ack received.
 class Data:
     # Constructor - initialize variables and split file into small chunks.
@@ -122,14 +123,35 @@ def fin():
         fin()
 
 
-# check arguments before staring.
+# validates IP address's format
+def validate_ip():
+    ip_parts = IP_ADDR.split(".")
+
+    if len(ip_parts) != 4:
+        return False
+
+    for part in ip_parts:
+        if not isinstance(int(part), int):
+            return False
+
+        if int(part) < 0 or int(part) > 255:
+            return False
+
+    return True
+
+
+# checks arguments before staring.
 def args_check():
     try:
-        if MAX_PORT < int(PORT) < 0:
+        if MAX_PORT < int(PORT) or int(PORT) < 0:
             raise "Port is not in the correct range"
 
-        if len(sys.argv) != 3:
+        if len(sys.argv) != 4:
             raise "Wrong amount of arguments."
+
+        if not validate_ip():
+            raise "Wrong IP address format."
+
     except:
         s.close()
         sys.exit()

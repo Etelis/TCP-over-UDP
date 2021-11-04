@@ -89,10 +89,10 @@ def fin(finish_client):
 # check arguments before staring.
 def args_check():
     try:
-        if MAX_PORT < int(PORT) < 0:
+        if MAX_PORT < int(PORT) or int(PORT) < 0:
             raise "Port is not in the correct range"
 
-        if len(sys.argv) != 1:
+        if len(sys.argv) != 2:
             raise "Wrong amount of arguments."
     except:
         s.close()
