@@ -3,8 +3,8 @@ import sys
 import time
 
 # Base variables and consts.
-IP_ADDR = sys.argv[1]
-PORT = int(sys.argv[2])
+IP_ADDR = sys.argv[2]
+PORT = int(sys.argv[1])
 FILE_NAME = sys.argv[3]
 DEFAULT_TIMEOUT = 5
 MSS = 97
@@ -64,7 +64,6 @@ class Data:
         return False
 
 
-
 # Sync method will be in charge of synchronizing connection with the server.
 def syn():
     syn_msg = SYN_MSG + data_toSend.get_size()
@@ -91,12 +90,16 @@ def send_pkgs():
 # will be in-charge of checking which acks have been received and marking the packages for future sending.
 def mark_acks():
     try:
+        # while still un-resolved packages in buffer keep marking them.
         while True:
             data_ack, address = s.recvfrom(100)
+            # if message is fin message go to fin and finish the connection.
             if data_ack == FIN_MSG:
                 fin()
+            # if syn message was found again meaning sever did not receive last one, client will resend it.
             if data_ack == SYN_MSG:
                 syn()
+            # otherwise store the ack received and mark the pacakge.
             pkg_num = int.from_bytes(data_ack[-3:len(data_ack)], 'little')
             data_toSend.notify_ack(pkg_num)
 
@@ -117,6 +120,11 @@ def fin():
             sys.exit()
     except socket.timeout:
         fin()
+
+def args_check():
+    if 65535 < int(PORT) < 0:
+        print("Port is not in the correct range")
+    if
 
 
 # UDP socket initialisation
