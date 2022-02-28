@@ -1,4 +1,4 @@
-# Networking
+# TCP Over UDP
 a project for Computer Networks at BIU using Python
 
 Implementing some of TCP features over UDP:
