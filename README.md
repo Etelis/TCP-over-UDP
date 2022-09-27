@@ -39,4 +39,4 @@ As a connection has been initialized, the server receives new packages; for each
  #### End of connection:
 After filling the boolean array, the server transmits a FIN message to the client resulting in its closing; if by the time of a timeout, no additional information was sent, the server closes the connection.
  
-A complete running example with a Hebrew explanation can be found here.
+A complete running example with a Hebrew explanation can be found <a href="https://github.com/Etelis/TCP-over-UDP/blob/Class_Stracture_Client/Networking%20-%20Part%20A%2CB.pdf" alt="HERE">.
